@@ -1,3 +1,13 @@
 package btree
 
-interface BTreeNode<K: Comparable<K>, V>
+interface BTreeNode<K: Comparable<K>, V> {
+    var keys: MutableList<K>
+
+    fun getValue(key: K): V?
+    fun remove(key: K)
+    fun insert(key: K, value: V)
+    fun split(): BTreeNode<K,V>
+    fun merge(node: BTreeNode<K,V>)
+    fun isOverflow(): Boolean
+    fun isUnderflow(): Boolean
+}
