@@ -1,114 +1,35 @@
 package btree
+import kotlin.collections.ArrayDeque
+
 
 class BTree<K: Comparable<K>, V> {
     var root: BTreeNode<K,V>? = BTreeLeafNode()
-//    private var leftLeafNode: BTreeLeafNode? = null
-//    private var rightLeafNode: BTreeLeafNode? = null
 
-//    fun insert(k: K, v: V) {
-//        if (root == null){
-//            val leafNode = BTreeLeafNode<K, V>()
-//            leafNode.entries.add(BTreeEntry(k,v))
-//            root = leafNode
-//
-//            leftLeafNode = leafNode
-//            rightLeafNode = leafNode
-//        } else{
-//            val leafNode = findLeafNode(k)
-//            leafNode.addEntry(k,v)
-//
-//            if (leafNode.entries.size > MAX_ENTRIES_PER_NODE){
-//                splitLeafNode(leafNode)
-//            }
-//        }
-//    }
-//
-//    private fun splitLeafNode(node: BTreeLeafNode<K,V>) {
-//        var newLeafNode = BTreeLeafNode<K,V>()
-//        val splitIndex = (MAX_ENTRIES_PER_NODE + 1) / 2
-//        val splitKey = node.entries[splitIndex].key
-//        val entriesToMove = node.entries.subList(splitIndex, node.entries.size).toMutableList()
-//        newLeafNode.entries.addAll(entriesToMove)
-//        entriesToMove.clear()
-//
-//        node.entries.subList(splitIndex, node.entries.size).clear()
-//
-//        newLeafNode.right = node.right
-//        newLeafNode.left = node
-//        node.right = newLeafNode
-//
-//        val parentNode: BTreeInternalNode<K,V>? = findParentNode(node)
-//
-//        if (parentNode != null){
-//            parentNode.addNode(newLeafNode)
-//
-//            if (parentNode.children.size > MAX_ENTRIES_PER_NODE){
-//                splitInternalNode(parentNode)
-//            }
-//        } else {
-//            val internalNode = BTreeInternalNode<K,V>()
-//            internalNode.addNode(node)
-//            internalNode.addNode(newLeafNode)
-//            root = internalNode
-//        }
-//    }
-//
-//    private fun splitInternalNode(node: BTreeInternalNode<K,V>) {
-//
-//        // node 와 internalNode 각각을 어떻게 해야 하지?
-//        // internal node 를 2개로 나눈다는 건 parent node 에 new node 을 add 한다는 의미지
-//        // add method 에서 split 까지 해야 할까?
-//        var newInternalNode = BTreeInternalNode<K,V>()
-//        val splitIndex = (MAX_ENTRIES_PER_NODE + 1) / 2
-//
-//        newInternalNode.keys = node.keys.subList(splitIndex, MAX_ENTRIES_PER_NODE + 1)
-//        newInternalNode.children = node.children.subList(splitIndex, MAX_ENTRIES_PER_NODE + 1)
-//
-//        node.children.subList(splitIndex, MAX_ENTRIES_PER_NODE + 1).clear()
-//        node.keys.subList(splitIndex, MAX_ENTRIES_PER_NODE + 1).clear()
-//
-//        val parentNode: BTreeInternalNode<K,V>? = findParentNode(node)
-//    }
-//
-//    private fun findLeafNode(key: K): BTreeLeafNode<K,V> {
-//        var currentNode = root
-//
-//        while (currentNode is BTreeInternalNode<*, *>) {
-//            var tmpNode = currentNode as BTreeInternalNode<K, V>
-//            var idx = 0
-//            while (idx < tmpNode.keys.size && key > tmpNode.keys[idx]) {
-//                idx ++
-//            }
-//            currentNode = tmpNode.children[idx]
-//        }
-//        return currentNode as BTreeLeafNode<K, V>
-//    }
-//
-//    private fun findParentNode(target: BTreeNode<K,V>): BTreeInternalNode<K,V>? {
-//        if (root == target){
-//            return null
-//        }
-//        return findParentNode(root as BTreeInternalNode<K, V>, target)
-//    }
-//
-//    private fun findParentNode(current: BTreeInternalNode<K,V>, target: BTreeNode<K,V>): BTreeInternalNode<K,V>?{
-//        if (current.children.contains(target)){
-//            return current
-//        }
-//        for (child in current.children){
-//            if (child is BTreeInternalNode<*, *>){
-//                val parent = findParentNode(child as BTreeInternalNode<K, V>, target)
-//                if (parent != null){
-//                    return parent
+    fun insert(key: K, value: V) {
+        root?.insert(key, value)
+    }
+    fun print() {
+        val queue = ArrayDeque<BTreeNode<K,V>?>()
+        queue.add(root)
+        while(!queue.isEmpty()){
+            var str = ""
+            val num = queue.size
+            for(i in 1..num){
+                var cur = queue.removeFirst()
+                str += "${cur?.keys} / "
+                if(cur is BTreeInternalNode){
+                    queue.addAll(cur.children)
+                }
+//                if(cur is BTreeLeafNode){
+//                    print(cur.values)
 //                }
-//            }
-//        }
-//        return null
-//    }
-//
+            }
+            println(str)
+        }
+    }
 
     companion object{
-        const val MAX_ENTRIES_PER_NODE = 4
+        const val MAX_ENTRIES_PER_NODE = 5
     }
 
     inner class BTreeInternalNode: BTreeNode<K, V> {
@@ -120,14 +41,13 @@ class BTree<K: Comparable<K>, V> {
         }
 
         override fun split(): BTreeInternalNode {
-            val from = (MAX_ENTRIES_PER_NODE) / 2 + 1
+            val from = (MAX_ENTRIES_PER_NODE + 1) / 2
             val to = MAX_ENTRIES_PER_NODE
-
             val newInternalNode = BTreeInternalNode()
-            newInternalNode.keys = keys.subList(from, to)
-            newInternalNode.children = children.subList(from, to + 1)
+            newInternalNode.keys.addAll( keys.subList(from, to))
+            newInternalNode.children.addAll(children.subList(from, to + 1))
 
-            keys.subList(from - 1, to).clear()
+            keys.subList(from, to).clear()
             children.subList(from, to + 1).clear()
 
             return newInternalNode
@@ -160,7 +80,7 @@ class BTree<K: Comparable<K>, V> {
         }
 
         override fun isOverflow(): Boolean {
-            TODO("Not yet implemented")
+            return children.size > MAX_ENTRIES_PER_NODE
         }
 
         override fun isUnderflow(): Boolean {
@@ -180,7 +100,7 @@ class BTree<K: Comparable<K>, V> {
                 children[childIndex] = node
             } else {
                 keys.add(childIndex, key)
-                children.add(childIndex, node)
+                children.add(childIndex + 1, node)
             }
         }
     }
@@ -189,7 +109,7 @@ class BTree<K: Comparable<K>, V> {
         var next: BTreeLeafNode? = null
 
         override var keys: MutableList<K> = mutableListOf()
-        private var values: MutableList<V> = mutableListOf()
+        var values: MutableList<V> = mutableListOf()
 
         override fun getValue(key: K): V? {
             val loc = keys.binarySearch(key)
@@ -199,7 +119,7 @@ class BTree<K: Comparable<K>, V> {
         override fun split(): BTreeLeafNode {
             val newLeafNode = BTreeLeafNode()
             val from = (MAX_ENTRIES_PER_NODE + 1) / 2
-            val to = MAX_ENTRIES_PER_NODE
+            val to = MAX_ENTRIES_PER_NODE + 1
 
             newLeafNode.keys.addAll(keys.subList(from, to))
             newLeafNode.values.addAll(values.subList(from, to))
