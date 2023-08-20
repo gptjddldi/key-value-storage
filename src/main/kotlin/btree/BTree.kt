@@ -68,7 +68,7 @@ class BTree<K: Comparable<K>, V> {
             if (root!!.isOverflow()){
                 val newInternalNode = split()
                 val newRoot = BTreeInternalNode()
-                newRoot.keys.add(newInternalNode.keys.first())
+                newRoot.keys.add(newInternalNode.getFirstLeafKey())
                 newRoot.children.add(this)
                 newRoot.children.add(newInternalNode)
                 root = newRoot
