@@ -41,13 +41,13 @@ class BTree<K: Comparable<K>, V> {
         }
 
         override fun split(): BTreeInternalNode {
-            val from = (MAX_ENTRIES_PER_NODE + 1) / 2
+            val from = (MAX_ENTRIES_PER_NODE) / 2 + 1
             val to = MAX_ENTRIES_PER_NODE
             val newInternalNode = BTreeInternalNode()
             newInternalNode.keys.addAll( keys.subList(from, to))
             newInternalNode.children.addAll(children.subList(from, to + 1))
 
-            keys.subList(from, to).clear()
+            keys.subList(from -1 , to).clear()
             children.subList(from, to + 1).clear()
 
             return newInternalNode
@@ -77,6 +77,10 @@ class BTree<K: Comparable<K>, V> {
 
         override fun merge(node: BTreeNode<K, V>) {
             TODO("Not yet implemented")
+        }
+
+        override fun getFirstLeafKey(): K {
+            return children[0].getFirstLeafKey()
         }
 
         override fun isOverflow(): Boolean {
@@ -159,6 +163,10 @@ class BTree<K: Comparable<K>, V> {
 
         override fun merge(node: BTreeNode<K, V>) {
             TODO("Not yet implemented")
+        }
+
+        override fun getFirstLeafKey(): K {
+            return keys[0]
         }
 
         override fun isOverflow(): Boolean {
