@@ -1,5 +1,4 @@
 package btree
-import kotlin.collections.ArrayDeque
 
 
 class BTree<K: Comparable<K>, V> {
@@ -7,6 +6,9 @@ class BTree<K: Comparable<K>, V> {
 
     fun insert(key: K, value: V) {
         root?.insert(key, value)
+    }
+    fun delete(key: K){
+        root?.delete(key)
     }
     fun print() {
         val queue = ArrayDeque<BTreeNode<K,V>?>()
@@ -20,16 +22,13 @@ class BTree<K: Comparable<K>, V> {
                 if(cur is BTreeInternalNode){
                     queue.addAll(cur.children)
                 }
-//                if(cur is BTreeLeafNode){
-//                    print(cur.values)
-//                }
             }
             println(str)
         }
     }
 
     companion object{
-        const val MAX_ENTRIES_PER_NODE = 5
+        const val MAX_ENTRIES_PER_NODE = 4
     }
 
     inner class BTreeInternalNode: BTreeNode<K, V> {
@@ -53,8 +52,27 @@ class BTree<K: Comparable<K>, V> {
             return newInternalNode
         }
 
-        override fun remove(key: K) {
-            TODO("Not yet implemented")
+        override fun delete(key: K) {
+            val child = getChild(key)
+            child.delete(key)
+
+            if(child.isUnderflow()){
+                var right = rightSibling(key)
+                var left = leftSibling(key)
+                right = if(left != null) child else right
+                left = left ?: child
+                if(right != null){
+                    left.merge(right)
+                    deleteChild(right.getFirstLeafKey())
+                }
+                if(left.isOverflow()){
+                    val newNode = left.split()
+                    insertChild(newNode.keys.first(), newNode)
+                }
+                if(root?.keys?.size == 0){
+                    root = left
+                }
+            }
         }
 
         override fun insert(key: K, value: V) {
@@ -76,7 +94,9 @@ class BTree<K: Comparable<K>, V> {
         }
 
         override fun merge(node: BTreeNode<K, V>) {
-            TODO("Not yet implemented")
+            keys.add(node.getFirstLeafKey())
+            keys.addAll(node.keys)
+            children.addAll((node as BTreeInternalNode).children)
         }
 
         override fun getFirstLeafKey(): K {
@@ -88,7 +108,7 @@ class BTree<K: Comparable<K>, V> {
         }
 
         override fun isUnderflow(): Boolean {
-            TODO("Not yet implemented")
+            return children.size < MAX_ENTRIES_PER_NODE / 2
         }
 
         private fun getChild(key: K): BTreeNode<K, V> {
@@ -106,6 +126,28 @@ class BTree<K: Comparable<K>, V> {
                 keys.add(childIndex, key)
                 children.add(childIndex + 1, node)
             }
+        }
+
+        private fun deleteChild(key: K) {
+            val loc = keys.binarySearch(key)
+            if(loc >= 0){
+                keys.removeAt(loc)
+                children.removeAt(loc + 1)
+            }
+        }
+        private fun leftSibling(key: K): BTreeNode<K, V>? {
+            val loc = keys.binarySearch(key)
+            val childIndex = if(loc > 0) loc + 1 else -loc - 1
+            if (childIndex > 0)
+                return children[childIndex - 1]
+            return null
+        }
+        private fun rightSibling(key: K): BTreeNode<K, V>? {
+            val loc = keys.binarySearch(key)
+            val childIndex = if(loc > 0) loc + 1 else -loc - 1
+            if (childIndex < keys.size)
+                return children[childIndex + 1]
+            return null
         }
     }
 
@@ -137,8 +179,12 @@ class BTree<K: Comparable<K>, V> {
             return newLeafNode
         }
 
-        override fun remove(key: K) {
-            TODO("Not yet implemented")
+        override fun delete(key: K) {
+            val loc = keys.binarySearch(key)
+            if (loc >= 0){
+                keys.removeAt(loc)
+                values.removeAt(loc)
+            }
         }
 
         override fun insert(key: K, value: V) {
@@ -162,7 +208,9 @@ class BTree<K: Comparable<K>, V> {
         }
 
         override fun merge(node: BTreeNode<K, V>) {
-            TODO("Not yet implemented")
+            keys.addAll(node.keys)
+            values.addAll((node as BTreeLeafNode).values)
+            next = node.next
         }
 
         override fun getFirstLeafKey(): K {
@@ -174,7 +222,7 @@ class BTree<K: Comparable<K>, V> {
         }
 
         override fun isUnderflow(): Boolean {
-            TODO("Not yet implemented")
+            return keys.size < MAX_ENTRIES_PER_NODE / 2
         }
     }
 }

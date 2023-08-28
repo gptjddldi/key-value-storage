@@ -4,7 +4,7 @@ interface BTreeNode<K: Comparable<K>, V> {
     var keys: MutableList<K>
 
     fun getValue(key: K): V?
-    fun remove(key: K)
+    fun delete(key: K)
     fun insert(key: K, value: V)
     fun split(): BTreeNode<K,V>
     fun merge(node: BTreeNode<K,V>)
